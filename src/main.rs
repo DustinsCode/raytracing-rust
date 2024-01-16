@@ -1,34 +1,23 @@
 mod vec;
 mod ray;
+mod hit;
+mod sphere;
+mod camera;
 
 use std::io::{stderr, Write};
 use vec::{Vec3, Point3, Color};
 use ray::Ray;
+use hit::{Hit, World};
+use sphere::Sphere;
 
-fn hit_sphere(center: Point3, radius: f64, r: &Ray) -> f64 {
-    let oc = r.origin() - center;
-    let a = r.direction().dot_product(r.direction());
-    let b = 2.0 * oc.dot_product(r.direction());
-    let c = oc.dot_product(oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-
-    if discriminant < 0.0 {
-        -1.0
+fn ray_color(r: &Ray, world: &World) -> Color {
+    if let Some(rec) = world.hit(r, 0.0, f64::INFINITY) {
+           0.5 * (rec.normal + Color::new(1.0,1.0,1.0))
     } else {
-        (-b - discriminant.sqrt()) / (2.0 * a)
+        let unit_direction = r.direction().normalized();
+        let t = 0.5 * (unit_direction.y() + 1.0);
+        (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
     }
-}
-
-fn ray_color(r: &Ray) -> Color {
-    let t = hit_sphere(Point3::new(0.0,0.0,-1.0), 0.5, r);
-    if t > 0.0 {
-        let n = (r.at(t) - Point3::new(0.0,0.0,-1.0)).normalized();
-        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
-    }
-
-    let unit_direction = r.direction().normalized();
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
 }
 
 fn main() {
@@ -36,6 +25,11 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u64 = 256;
     const IMAGE_HEIGHT: u64 = ((256 as f64) / ASPECT_RATIO) as u64;
+
+    // World
+    let mut world = World::new();
+    world.push(Box::new(Sphere::new(Point3::new(0.0,0.0,-1.0), 0.5)));
+    world.push(Box::new(Sphere::new(Point3::new(0.0,-100.5,-1.0), 100.0)));
 
     // Camera
     let viewport_height = 2.0;
@@ -61,7 +55,7 @@ fn main() {
 
             let r = Ray::new(origin,
                              lower_left_corner + u * horizontal + v * vertical - origin);
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(&r, &world);
             println!("{}", pixel_color.format_color());
         }
     }
