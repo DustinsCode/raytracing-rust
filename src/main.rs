@@ -3,6 +3,7 @@ mod ray;
 mod hit;
 mod sphere;
 mod camera;
+mod material;
 
 use std::io::{stderr, Write};
 use rand::Rng;
