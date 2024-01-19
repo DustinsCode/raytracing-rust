@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 use crate::material::Scatter;
 use super::hit::{Hit, HitRecord};
 use super::vec::{Point3, Vec3};
@@ -7,11 +7,11 @@ use super::ray::Ray;
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    mat: Rc<dyn Scatter>
+    mat: Arc<dyn Scatter>
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius:f64, m: Rc<dyn Scatter>) -> Sphere {
+    pub fn new(center: Point3, radius:f64, m: Arc<dyn Scatter>) -> Sphere {
         Sphere {
             center,
             radius,
